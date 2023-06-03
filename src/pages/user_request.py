@@ -1,16 +1,19 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 import datetime
-
 from pydantic import BaseModel
 
 from model.database import requests_table, database, SessionLocal
+from predict.predict import get_category
 
 user_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
 class SupportRequest(BaseModel):
+    """
+    Модель данных для параметров запроса
+    """
     name: str
     email: str
     message: str
@@ -27,9 +30,14 @@ async def show_records(request: Request):
 async def create_request(request: SupportRequest):
     print(f"name = {request.name}, email: {request.email}, message = {request.message}")
 
-    category = 'Спорт'
+    category = get_category(request.message)
+
+    print(f"category = {category}")
+
+    date = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
     query = requests_table.insert().values(
-        date=str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+        date=date,
         name=request.name,
         email=request.email,
         message=request.message,
@@ -38,7 +46,14 @@ async def create_request(request: SupportRequest):
     )
 
     request_id = await database.execute(query)
-    return {"id": request_id, **request.dict(), "status": "в работе"}
+    return \
+        {
+            "id": request_id,
+            **request.dict(),
+            "date": date,
+            "category": category,
+            "status": "в работе"
+        }
 
 
 @user_router.post("/delete_record")
