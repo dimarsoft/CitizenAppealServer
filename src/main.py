@@ -4,8 +4,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-# from models import download_models
-
 from pages.router import router_pages
 from pages.user_request import user_router
 
